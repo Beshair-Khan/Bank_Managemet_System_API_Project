@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Loans - BankMS</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+</head>
+<body>
+
+  <div class="sidebar">
+  <div class="logo">🏦 <span>BankMS</span></div>
+
+  <a href="index.html">Dashboard</a>
+  <a href="customers.html">Customers</a>
+  <a href="accounts.html">Accounts</a>
+  <a href="transactions.html">Transactions</a>
+  <a href="loans.html" class="active">Loans</a>
+  <a href="cards.html">Cards</a>
+</div>
+
+  <div class="container">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+      <div class="page-title" style="margin-bottom:0">Loans</div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+      <div class="stat-card blue">
+        <div class="label">Total Loans</div>
+        <div class="value" id="totalLoans">...</div>
+        <div class="sub">All loans</div>
+      </div>
+      <div class="stat-card green">
+        <div class="label">Active Loans</div>
+        <div class="value" id="activeLoans">...</div>
+        <div class="sub">Currently active</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="label">Total Principal</div>
+        <div class="value" id="totalPrincipal">...</div>
+        <div class="sub">Sum of all loans</div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Customer</th>
+            <th>Loan Type</th>
+            <th>Principal</th>
+            <th>Interest Rate</th>
+            <th>Term</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="loansTable">
+          <tr><td colspan="9" class="loading">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script type="module">
+    import { getLoans } from '../js/api.js';
+
+    async function loadLoans() {
+      const res = await getLoans();
+      const tbody = document.getElementById('loansTable');
+
+      if (!res.data || res.data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="loading">No loans found</td></tr>`;
+        return;
+      }
+
+      // ── Summary Stats ──
+      const total     = res.data.length;
+      const active    = res.data.filter(l => l.status === 'Active').length;
+      const principal = res.data.reduce((sum, l) => sum + Number(l.principal), 0);
+
+      document.getElementById('totalLoans').textContent     = total;
+      document.getElementById('activeLoans').textContent    = active;
+      document.getElementById('totalPrincipal').textContent = `PKR ${principal.toLocaleString()}`;
+
+      // ── Table ──
+      tbody.innerHTML = res.data.map(l => `
+        <tr>
+          <td>${l.loan_id}</td>
+          <td>${l.first_name} ${l.last_name}</td>
+          <td>${l.type_name}</td>
+          <td>PKR ${Number(l.principal).toLocaleString()}</td>
+          <td>${l.interest_rate}%</td>
+          <td>${l.term_months} months</td>
+          <td>${new Date(l.start_date).toLocaleDateString()}</td>
+          <td>${new Date(l.end_date).toLocaleDateString()}</td>
+          <td><span class="badge ${l.status.toLowerCase()}">${l.status}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    loadLoans();
+  </script>
+
+</body>
+</html>

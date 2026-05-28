@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cards - BankMS</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+</head>
+<body>
+
+  <div class="sidebar">
+  <div class="logo">🏦 <span>BankMS</span></div>
+
+  <a href="index.html">Dashboard</a>
+  <a href="customers.html">Customers</a>
+  <a href="accounts.html">Accounts</a>
+  <a href="transactions.html">Transactions</a>
+  <a href="loans.html">Loans</a>
+  <a href="cards.html" class="active">Cards</a>
+</div>
+
+  <div class="container">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+      <div class="page-title" style="margin-bottom:0">Cards</div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+      <div class="stat-card blue">
+        <div class="label">Total Cards</div>
+        <div class="value" id="totalCards">...</div>
+        <div class="sub">All cards</div>
+      </div>
+      <div class="stat-card green">
+        <div class="label">Active Cards</div>
+        <div class="value" id="activeCards">...</div>
+        <div class="sub">Currently active</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="label">Blocked Cards</div>
+        <div class="value" id="blockedCards">...</div>
+        <div class="sub">Blocked by customer</div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Customer</th>
+            <th>Card Number</th>
+            <th>Type</th>
+            <th>Network</th>
+            <th>Credit Limit</th>
+            <th>Expiry</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="cardsTable">
+          <tr><td colspan="9" class="loading">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script type="module">
+    import { getCards } from '../js/api.js';
+
+    const BASE_URL = 'https://ideal-waffle-69566r5qqq9wfr5rw-3000.app.github.dev/api';
+
+    async function loadCards() {
+      const res = await getCards();
+      const tbody = document.getElementById('cardsTable');
+
+      if (!res.data || res.data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="loading">No cards found</td></tr>`;
+        return;
+      }
+
+      // ── Summary Stats ──
+      const total   = res.data.length;
+      const active  = res.data.filter(c => c.status === 'Active').length;
+      const blocked = res.data.filter(c => c.status === 'Blocked').length;
+
+      document.getElementById('totalCards').textContent   = total;
+      document.getElementById('activeCards').textContent  = active;
+      document.getElementById('blockedCards').textContent = blocked;
+
+      // ── Table ──
+      tbody.innerHTML = res.data.map(c => `
+        <tr>
+          <td>${c.card_id}</td>
+          <td>${c.first_name} ${c.last_name}</td>
+          <td>${c.card_number}</td>
+          <td>${c.card_type}</td>
+          <td>${c.card_network}</td>
+          <td>${c.credit_limit ? 'PKR ' + Number(c.credit_limit).toLocaleString() : '—'}</td>
+          <td>${new Date(c.expiry_date).toLocaleDateString()}</td>
+          <td><span class="badge ${c.status.toLowerCase()}">${c.status}</span></td>
+          <td>
+            ${c.status === 'Active'
+              ? `<button class="btn btn-danger" onclick="blockCard(${c.card_id})">Block</button>`
+              : `<button class="btn btn-success" onclick="unblockCard(${c.card_id})">Unblock</button>`
+            }
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // ── Block Card ──
+    window.blockCard = async function(id) {
+      if (confirm('Block this card?')) {
+        await fetch(`${BASE_URL}/cards/${id}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'Blocked' })
+        });
+        loadCards();
+      }
+    };
+
+    // ── Unblock Card ──
+    window.unblockCard = async function(id) {
+      if (confirm('Unblock this card?')) {
+        await fetch(`${BASE_URL}/cards/${id}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'Active' })
+        });
+        loadCards();
+      }
+    };
+
+    loadCards();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Customers - BankMS</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo">🏦 <span>BankMS</span></div>
+
+    <a href="index.html">Dashboard</a>
+    <a href="customers.html" class="active">Customers</a>
+    <a href="accounts.html">Accounts</a>
+    <a href="transactions.html">Transactions</a>
+    <a href="loans.html">Loans</a>
+    <a href="cards.html">Cards</a>
+  </div>
+
+  <div class="container">
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+      <div class="page-title" style="margin-bottom:0">Customers</div>
+      <button class="btn btn-primary" onclick="openAddModal()">+ Add Customer</button>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>City</th>
+            <th>Join Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+
+        <tbody id="customersTable">
+          <tr><td colspan="8" class="loading">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MODAL (ONLY ONE - FIXED) -->
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="modal">
+
+      <h2 id="modalTitle">Add Customer</h2>
+
+      <div class="form-group">
+        <label>First Name</label>
+        <input id="firstName" type="text"/>
+      </div>
+
+      <div class="form-group">
+        <label>Last Name</label>
+        <input id="lastName" type="text"/>
+      </div>
+
+      <div class="form-group">
+        <label>Email</label>
+        <input id="email" type="email"/>
+      </div>
+
+      <div class="form-group">
+        <label>Phone</label>
+        <input id="phone" type="text"/>
+      </div>
+
+      <div class="form-group">
+        <label>CNIC</label>
+        <input id="cnic" type="text"/>
+      </div>
+
+      <div class="form-group">
+        <label>Date of Birth</label>
+        <input id="dob" type="date"/>
+      </div>
+
+      <div class="form-group">
+        <label>Address</label>
+        <input id="address" type="text"/>
+      </div>
+
+      <div class="form-group">
+        <label>City</label>
+        <input id="city" type="text"/>
+      </div>
+
+      <div class="form-group" id="statusGroup" style="display:none;">
+        <label>Status</label>
+        <select id="status">
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+          <option value="Blocked">Blocked</option>
+        </select>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-danger" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveCustomer()">Save</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SCRIPT -->
+  <script type="module">
+    import {
+      getCustomers,
+      createCustomer,
+      updateCustomer,
+      deleteCustomer,
+      getCustomerById
+    } from '../js/api.js';
+
+    let editingId = null;
+
+    // LOAD CUSTOMERS
+    async function loadCustomers() {
+      const res = await getCustomers();
+      const tbody = document.getElementById('customersTable');
+
+      if (!res.data || res.data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="loading">No customers found</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = res.data.map(c => `
+        <tr>
+          <td>${c.customer_id}</td>
+          <td>${c.first_name} ${c.last_name}</td>
+          <td>${c.email}</td>
+          <td>${c.phone}</td>
+          <td>${c.city}</td>
+          <td>${new Date(c.join_date).toLocaleDateString()}</td>
+          <td><span class="badge ${c.status.toLowerCase()}">${c.status}</span></td>
+          <td style="display:flex; gap:8px;">
+            <button class="btn btn-warning" onclick="openEditModal(${c.customer_id})">Edit</button>
+            <button class="btn btn-danger" onclick="removeCustomer(${c.customer_id})">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // OPEN ADD
+    window.openAddModal = function () {
+      editingId = null;
+      document.getElementById('modalTitle').textContent = "Add Customer";
+      document.getElementById('statusGroup').style.display = "none";
+      clearForm();
+      document.getElementById('modalOverlay').classList.add('open');
+    };
+
+    // OPEN EDIT
+    window.openEditModal = async function (id) {
+      editingId = id;
+
+      document.getElementById('modalTitle').textContent = "Edit Customer";
+      document.getElementById('statusGroup').style.display = "block";
+
+      const data = await getCustomerById(id);
+      const c = data.data;
+
+      document.getElementById('firstName').value = c.first_name;
+      document.getElementById('lastName').value = c.last_name;
+      document.getElementById('email').value = c.email;
+      document.getElementById('phone').value = c.phone;
+      document.getElementById('cnic').value = c.cnic;
+      document.getElementById('dob').value = c.date_of_birth?.split('T')[0];
+      document.getElementById('address').value = c.address;
+      document.getElementById('city').value = c.city;
+      document.getElementById('status').value = c.status;
+
+      document.getElementById('modalOverlay').classList.add('open');
+    };
+
+    // SAVE
+    window.saveCustomer = async function () {
+      const data = {
+        first_name: document.getElementById('firstName').value,
+        last_name: document.getElementById('lastName').value,
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value,
+        cnic: document.getElementById('cnic').value,
+        date_of_birth: document.getElementById('dob').value,
+        address: document.getElementById('address').value,
+        city: document.getElementById('city').value,
+        status: document.getElementById('status').value || "Active"
+      };
+
+      if (editingId) {
+        await updateCustomer(editingId, data);
+      } else {
+        await createCustomer(data);
+      }
+
+      closeModal();
+      loadCustomers();
+    };
+
+    // DELETE
+    window.removeCustomer = async function (id) {
+      if (confirm("Are you sure?")) {
+        await deleteCustomer(id);
+        loadCustomers();
+      }
+    };
+
+    // CLOSE MODAL
+    window.closeModal = function () {
+      document.getElementById('modalOverlay').classList.remove('open');
+      clearForm();
+    };
+
+    function clearForm() {
+      ["firstName","lastName","email","phone","cnic","dob","address","city"].forEach(id => {
+        document.getElementById(id).value = "";
+      });
+    }
+
+    loadCustomers();
+  </script>
+
+</body>
+</html>

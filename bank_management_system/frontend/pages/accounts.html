@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Accounts - BankMS</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+</head>
+<body>
+
+  <div class="sidebar">
+  <div class="logo">🏦 <span>BankMS</span></div>
+
+  <a href="index.html">Dashboard</a>
+  <a href="customers.html">Customers</a>
+  <a href="accounts.html" class="active">Accounts</a>
+  <a href="transactions.html">Transactions</a>
+  <a href="loans.html">Loans</a>
+  <a href="cards.html">Cards</a>
+</div>
+
+  <div class="container">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+      <div class="page-title" style="margin-bottom:0">Accounts</div>
+    </div>
+
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Account Number</th>
+            <th>Customer</th>
+            <th>Type</th>
+            <th>Balance</th>
+            <th>Open Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="accountsTable">
+          <tr><td colspan="7" class="loading">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script type="module">
+    import { getAccounts } from '../js/api.js';
+
+    async function loadAccounts() {
+      const res = await getAccounts();
+      const tbody = document.getElementById('accountsTable');
+
+      if (!res.data || res.data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="loading">No accounts found</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = res.data.map(a => `
+        <tr>
+          <td>${a.account_id}</td>
+          <td>${a.account_number}</td>
+          <td>${a.first_name} ${a.last_name}</td>
+          <td>${a.account_type}</td>
+          <td>PKR ${Number(a.balance).toLocaleString()}</td>
+          <td>${new Date(a.open_date).toLocaleDateString()}</td>
+          <td><span class="badge ${a.status.toLowerCase()}">${a.status}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    loadAccounts();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Transactions - BankMS</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+</head>
+<body>
+
+  <div class="sidebar">
+  <div class="logo">🏦 <span>BankMS</span></div>
+
+  <a href="index.html">Dashboard</a>
+  <a href="customers.html">Customers</a>
+  <a href="accounts.html">Accounts</a>
+  <a href="transactions.html" class="active">Transactions</a>
+  <a href="loans.html">Loans</a>
+  <a href="cards.html">Cards</a>
+</div>
+
+  <div class="container">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+      <div class="page-title" style="margin-bottom:0">Transactions</div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+      <div class="stat-card blue">
+        <div class="label">Total Transactions</div>
+        <div class="value" id="totalTxns">...</div>
+        <div class="sub">All recorded</div>
+      </div>
+      <div class="stat-card green">
+        <div class="label">Total Deposited</div>
+        <div class="value" id="totalDeposits">...</div>
+        <div class="sub">Sum of deposits</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="label">Total Withdrawn</div>
+        <div class="value" id="totalWithdrawals">...</div>
+        <div class="sub">Sum of withdrawals</div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Reference No</th>
+            <th>Account</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Balance After</th>
+            <th>Date</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody id="transactionsTable">
+          <tr><td colspan="8" class="loading">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script type="module">
+    import { getTransactions } from '../js/api.js';
+
+    async function loadTransactions() {
+      const res = await getTransactions();
+      const tbody = document.getElementById('transactionsTable');
+
+      if (!res.data || res.data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="loading">No transactions found</td></tr>`;
+        return;
+      }
+
+      // ── Summary Stats ──
+      const total     = res.data.length;
+      const deposits  = res.data
+        .filter(t => t.type_name === 'Deposit')
+        .reduce((sum, t) => sum + Number(t.amount), 0);
+      const withdrawals = res.data
+        .filter(t => t.type_name === 'Withdrawal' || t.type_name === 'ATM')
+        .reduce((sum, t) => sum + Number(t.amount), 0);
+
+      document.getElementById('totalTxns').textContent        = total;
+      document.getElementById('totalDeposits').textContent    = `PKR ${deposits.toLocaleString()}`;
+      document.getElementById('totalWithdrawals').textContent = `PKR ${withdrawals.toLocaleString()}`;
+
+      // ── Table ──
+      tbody.innerHTML = res.data.map(t => `
+        <tr>
+          <td>${t.txn_id}</td>
+          <td>${t.reference_no || '—'}</td>
+          <td>${t.account_number}</td>
+          <td>${t.type_name}</td>
+          <td>PKR ${Number(t.amount).toLocaleString()}</td>
+          <td>PKR ${Number(t.balance_after).toLocaleString()}</td>
+          <td>${new Date(t.txn_date).toLocaleDateString()}</td>
+          <td>${t.description || '—'}</td>
+        </tr>
+      `).join('');
+    }
+
+    loadTransactions();
+  </script>
+
+</body>
+</html>

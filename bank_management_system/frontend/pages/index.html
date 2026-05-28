@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bank Management System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- Navbar -->
+ <div class="sidebar">
+  <div class="logo">🏦 <span>SMIU BankMS</span></div>
+
+  <a href="index.html" class="active">Dashboard</a>
+  <a href="customers.html">Customers</a>
+  <a href="accounts.html">Accounts</a>
+  <a href="transactions.html">Transactions</a>
+  <a href="loans.html">Loans</a>
+  <a href="cards.html">Cards</a>
+</div>
+
+  <div class="container">
+    <div class="page-title">Dashboard Overview</div>
+
+    <!-- Stat Cards -->
+    <div class="stats-grid">
+      <div class="stat-card blue">
+        <div class="label">Total Customers</div>
+        <div class="value" id="totalCustomers">...</div>
+        <div class="sub">Registered customers</div>
+      </div>
+      <div class="stat-card green">
+        <div class="label">Total Accounts</div>
+        <div class="value" id="totalAccounts">...</div>
+        <div class="sub">Active bank accounts</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="label">Active Loans</div>
+        <div class="value" id="totalLoans">...</div>
+        <div class="sub">Loans in progress</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="label">Transactions</div>
+        <div class="value" id="totalTransactions">...</div>
+        <div class="sub">Total recorded</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3>Transactions by Type</h3>
+        <canvas id="transactionsChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Account Types</h3>
+        <canvas id="accountsChart"></canvas>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3>Loan Status Breakdown</h3>
+        <canvas id="loansChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Customers by City</h3>
+        <canvas id="citiesChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Recent Transactions Table -->
+    <div class="table-card">
+      <h3>Recent Transactions</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Ref No</th>
+            <th>Account</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Date</th>
+            <th>Balance After</th>
+          </tr>
+        </thead>
+        <tbody id="transactionsTable">
+          <tr><td colspan="6" class="loading">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <script type="module">
+    import {
+      getCustomers,
+      getAccounts,
+      getTransactions,
+      getLoans
+    } from '../js/api.js';
+
+    // ── Load Stat Cards ──
+    async function loadStats() {
+      const [customers, accounts, loans, transactions] = await Promise.all([
+        getCustomers(),
+        getAccounts(),
+        getLoans(),
+        getTransactions()
+      ]);
+
+      document.getElementById('totalCustomers').textContent    = customers.count;
+      document.getElementById('totalAccounts').textContent     = accounts.count;
+      document.getElementById('totalLoans').textContent        = loans.count;
+      document.getElementById('totalTransactions').textContent = transactions.count;
+
+      loadTransactionsChart(transactions.data);
+      loadAccountsChart(accounts.data);
+      loadLoansChart(loans.data);
+      loadCitiesChart(customers.data);
+      loadRecentTransactions(transactions.data);
+    }
+
+    // ── Chart 1: Transactions by Type (Bar) ──
+    function loadTransactionsChart(data) {
+      const counts = {};
+      data.forEach(t => {
+        counts[t.type_name] = (counts[t.type_name] || 0) + 1;
+      });
+
+      new Chart(document.getElementById('transactionsChart'), {
+        type: 'bar',
+        data: {
+          labels: Object.keys(counts),
+          datasets: [{
+            label: 'Number of Transactions',
+            data: Object.values(counts),
+            backgroundColor: [
+ '#c1121f',
+ '#d62828',
+ '#e5383b',
+ '#ef233c',
+ '#ff758f',
+ '#ffb3c1'
+],
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
+
+    // ── Chart 2: Account Types (Doughnut) ──
+    function loadAccountsChart(data) {
+      const counts = {};
+      data.forEach(a => {
+        counts[a.account_type] = (counts[a.account_type] || 0) + 1;
+      });
+
+      new Chart(document.getElementById('accountsChart'), {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(counts),
+          datasets: [{
+            data: Object.values(counts),
+            backgroundColor: [
+ '#c1121f',
+ '#d62828',
+ '#e5383b',
+ '#ef233c',
+ '#ff758f',
+ '#ffb3c1'
+],
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+    }
+
+    // ── Chart 3: Loan Status (Pie) ──
+    function loadLoansChart(data) {
+      const counts = {};
+      data.forEach(l => {
+        counts[l.status] = (counts[l.status] || 0) + 1;
+      });
+
+      new Chart(document.getElementById('loansChart'), {
+        type: 'pie',
+        data: {
+          labels: Object.keys(counts),
+          datasets: [{
+            data: Object.values(counts),
+            backgroundColor: [
+ '#c1121f',
+ '#d62828',
+ '#e5383b',
+ '#ef233c',
+ '#ff758f',
+ '#ffb3c1'
+],
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+    }
+
+    // ── Chart 4: Customers by City (Bar) ──
+    function loadCitiesChart(data) {
+      const counts = {};
+      data.forEach(c => {
+        counts[c.city] = (counts[c.city] || 0) + 1;
+      });
+
+      new Chart(document.getElementById('citiesChart'), {
+        type: 'bar',
+        data: {
+          labels: Object.keys(counts),
+          datasets: [{
+            label: 'Customers',
+            data: Object.values(counts),
+            backgroundColor: [
+ '#c1121f',
+ '#d62828',
+ '#e5383b',
+ '#ef233c',
+ '#ff758f',
+ '#ffb3c1'
+],
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
+
+    // ── Recent Transactions Table ──
+    function loadRecentTransactions(data) {
+      const tbody = document.getElementById('transactionsTable');
+      const recent = data.slice(0, 8);
+
+      if (recent.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="loading">No transactions found</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = recent.map(t => `
+        <tr>
+          <td>${t.reference_no || '—'}</td>
+          <td>${t.account_number}</td>
+          <td>${t.type_name}</td>
+          <td>PKR ${Number(t.amount).toLocaleString()}</td>
+          <td>${new Date(t.txn_date).toLocaleDateString()}</td>
+          <td>PKR ${Number(t.balance_after).toLocaleString()}</td>
+        </tr>
+      `).join('');
+    }
+
+    // ── Run everything ──
+    loadStats();
+  </script>
+
+</body>
+</html>
