@@ -90,12 +90,8 @@ bank_management_system/
 │   │   └── transactions.html
 │   ├── css/
 │   │   ├── style.css
-│   │   └── dashboard.css
 │   └── js/
 │       ├── api.js
-│       ├── customers.js
-│       ├── dashboard.js
-│       └── transactions.js
 │
 ├── database/
 │   └── schema.sql
