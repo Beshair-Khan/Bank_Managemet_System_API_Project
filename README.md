@@ -137,8 +137,8 @@ npm run dev
 ![Dashboard](frontend/assets/screenshots/dashboard2.png)
 
 ### Customers Page
-![Customers](bank_management_system/frontend/assets/screenshots/customers.png)
-![Customers](bank_management_system/frontend/assets/screenshots/add_customers.png)
+![Customers](bank_management_system/frontend/assets/screenshots/custom1.png)
+![Customers](bank_management_system/frontend/assets/screenshots/custom2.png)
 
 ### Accounts Page
 ![Accounts](bank_management_system/frontend/assets/screenshots/accounts.png)

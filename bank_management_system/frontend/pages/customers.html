@@ -227,7 +227,7 @@
             <td>${new Date(c.join_date).toLocaleDateString()}</td>
             <td><span class="badge ${c.status.toLowerCase()}">${c.status}</span></td>
             <td style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button class="btn btn-sm btn-outline" onclick="openEditModal(${c.customer_id})">✏️ Edit</button>
+              <button class="btn btn-sm btn-outline" onclick="openEditModal(${c.customer_id})"> Edit</button>
               <button class="btn btn-sm" style="background:#f8d7da;color:#721c24;" onclick="removeCustomer(${c.customer_id})">🗑 Delete</button>
             </td>
           </tr>
