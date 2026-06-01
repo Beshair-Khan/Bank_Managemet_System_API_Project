@@ -90,12 +90,8 @@ bank_management_system/
 │   │   └── transactions.html
 │   ├── css/
 │   │   ├── style.css
-│   │   └── dashboard.css
 │   └── js/
 │       ├── api.js
-│       ├── customers.js
-│       ├── dashboard.js
-│       └── transactions.js
 │
 ├── database/
 │   └── schema.sql
@@ -134,7 +130,7 @@ npm run dev
 
 ### Dashboard
 ![Dashboard](bank_management_system/frontend/assets/screenshots/dashboard.png)
-![Dashboard](frontend/assets/screenshots/dashboard2.png)
+![Dashboard](bank_management_system/frontend/assets/screenshots/dashboard2.png)
 
 ### Customers Page
 ![Customers](bank_management_system/frontend/assets/screenshots/custom1.png)
